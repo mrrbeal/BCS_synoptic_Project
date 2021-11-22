@@ -2,9 +2,10 @@ import sqlite3
 from typing import Dict, List
 
 def DEBUG(text):
-    if DEBUG == True:
+    if DEBUGON == True:
         print(text)
 
+DEBUGON = True
 
 class MediaDataBase:
     next_state = 1
@@ -118,10 +119,10 @@ class MediaDataBase:
 ### Code for handling categories START ########################################################################
     def database_category_insert(self,to_insert) -> None:
         records = [(to_insert,self.session_state)]
-        DEBUG(f"DB CATAGORY INSERT, {records}")
+        DEBUG(f"DB CATAGORY INSERT, {to_insert}, {self.session_state}")
         try:
             with self.connection as con:
-                con.executemany('INSERT INTO categories(category_name, fok_state_id) VALUES(?,?);',records)
+                con.execute('INSERT INTO categories(category_name, fok_state_id) VALUES(?,?);',(to_insert,self.session_state))
         except sqlite3.Error as e:
             print("An error occurred:", e.args[0])
 
@@ -131,7 +132,7 @@ class MediaDataBase:
         if queryStr == None:
             try:
                 with self.connection as con:
-                    records += con.execute('SELECT * FROM categories;')
+                    records += con.execute('SELECT * FROM categories WHERE fok_state_id =?;',(self.session_state,))
                     print("RESULTS: ",records)
                     return list(records)
             except sqlite3.Error as e:
@@ -139,7 +140,7 @@ class MediaDataBase:
         else:
             try:
                 with self.connection as con:
-                    records += con.execute('SELECT * FROM categories WHERE category_name = ?;',(queryStr,))
+                    records += con.execute('SELECT * FROM categories WHERE category_name = ? AND fok_state_id =?;',(queryStr,self.session_state))
                     print("RESULTS: ",records)
                     return list(records)
             except sqlite3.Error as e:

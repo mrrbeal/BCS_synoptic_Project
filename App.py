@@ -5,7 +5,7 @@ from tkinter import font as tkfont
 from tkinter.constants import BOTH, CENTER, END, NO, RIGHT, W, Y
 from tkinter.ttk import *
 from tkscrolledframe import ScrolledFrame
-from typing import Counter, Text
+from typing import Container, Counter, Text
 from PIL import Image, ImageTk
 import Database
 import win32api
@@ -34,7 +34,8 @@ class MediaOrganiser(tk.Tk):
         #self.database = Database.MediaDataBase(self.dname + r"\Data\system_database.db")
         self.database = Database.MediaDataBase("cheese1.db")
 
-        self.current_session_state = 40
+        self.current_session_state = 10
+        self.database.session_state = self.current_session_state
    
         # the container is where we'll stack a bunch of frames
         # on top of each other, then the one we want visible
@@ -69,7 +70,7 @@ class MediaOrganiser(tk.Tk):
         self.playlist_frame = ToggledFrame(sideMenu, self, text='playlists')
         self.playlist_frame.mainLabel.config(font="BahnschriftLight 15", bg=self.colourPalette["darkblue"], fg="white", activebackground=self.colourPalette["darkblue"], activeforeground="black", bd=0)
         self.playlist_frame.grid(column=0,row=1, columnspan=2)
-        tk.Button(sideMenu, text="settings",command=lambda x = "Files": self.show_frame(x), font="BahnschriftLight 15",
+        tk.Button(sideMenu, text="Categories",command=lambda x = "Categories": self.show_frame(x), font="BahnschriftLight 15",
                      bg=self.colourPalette["darkblue"], fg="white", activebackground=self.colourPalette["darkblue"], activeforeground="black", bd=0).grid(column=0,row=2, columnspan=2)
         tk.Button(sideMenu, text="Help",command=lambda x = "Files": self.show_frame(x), font="BahnschriftLight 15", 
                     bg=self.colourPalette["darkblue"], fg="white", activebackground=self.colourPalette["darkblue"], activeforeground="black", bd=0).grid(column=0,row=3, columnspan=2)
@@ -86,7 +87,7 @@ class MediaOrganiser(tk.Tk):
         container.grid_columnconfigure(0, weight=1)
 
         self.frames = {}
-        for F in (StartPage, Playlists, Files):
+        for F in (Categories, Playlists, Files):
             page_name = F.__name__
             frame = F(parent=container, controller=self)
             self.frames[page_name] = frame
@@ -98,24 +99,145 @@ class MediaOrganiser(tk.Tk):
 
         self.show_frame("Files")
 
+    # def show_frame(self, page_name):
+    #     '''Show a frame for the given page name'''
+    #     frame = self.frames[page_name]
+    #     frame.tkraise()
+
     def show_frame(self, page_name):
-        '''Show a frame for the given page name'''
+        for frame in self.frames.values():
+            frame.grid_remove()
         frame = self.frames[page_name]
-        frame.tkraise()
+        frame.grid()
+    
+    def get_page(self, page_class):
+        return self.frames[page_class]
 
 
-class StartPage(tk.Frame):
+class Categories(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+        self.searchBar = Entry(self,font=("helvetica",16))
+        self.searchBar.grid(column=0,row=0,columnspan=3, pady=25,padx= 50)
+        self.searchBar.insert(0, 'Search Files')
+        self.searchBar.bind("<FocusIn>", lambda args: self.searchBar.delete('0', 'end'))
+        self.searchBar.bind("<KeyRelease>", lambda args: self.dynamicTreeSearch(self.searchBar.get()))
+        button_addFiles = tk.Button(self, text="Add A Category", command= self.popupwin).grid(column=0,row=1,sticky='W')
+        button_view_editFiles = tk.Button(self, text="View Or Edit File", command=lambda: controller.show_frame("StartPage")).grid(column=1,row=1,sticky='E')
+        button_deleteFiles = tk.Button(self, text="Delete File", command=lambda: self.delete_treeItem()).grid(column=2,row=1,sticky='W')
+        button_deleteFiles12 = tk.Button(self, text="Delete File", command=lambda: self.treeSelectedItem()).grid(column=3,row=1,sticky='W')
+        button_deleteFiles2 = tk.Button(self, text="Delete File", command=lambda: self.treeSelectedItem()).grid(column=4,row=1,sticky='W')
+        button_deleteFiles4 = tk.Button(self, text="Delete File", command=lambda: self.treeSelectedItem()).grid(column=5,row=1,sticky='W')
+        button_deleteFiles22 = tk.Button(self, text="Delete File", command=lambda: self.treeSelectedItem()).grid(column=6,row=1,sticky='W')
+        button_deleteFiles434 = tk.Button(self,text='Print Selected', command=lambda: self.selected_item()).grid(column=7,row=1,sticky='W')
 
-        button1 = tk.Button(self, text="Go to Page One",
-                            command=lambda: controller.show_frame("PageOne"))
-        button2 = tk.Button(self, text="Go to Page Two",
-                            command=lambda: controller.show_frame("PageTwo"))
-        button1.pack()
-        button2.pack()
+        style = ttk.Style()
+        style.theme_use('default')
+        style.configure("Treeview",
+        background="#D3D3D3",
+        foreground="black",
+        rowheight=30,
+        fieldbackground="#D3D3D3",
+        height=800)
+        style.map("Treeview", background=[("selected","#347083")])
+
+        tree_frame= Frame(self)
+        tree_frame.grid(column=0, row=3, columnspan=3, pady=10)
+
+        tree_scroll = Scrollbar(tree_frame)
+        tree_scroll.pack(side=RIGHT, fill=Y)
+
+        self.tree = ttk.Treeview(tree_frame, yscrollcommand=tree_scroll.set, selectmode="extended",height=15)
+        self.tree.pack()
+
+        tree_scroll.config(command=self.tree.yview)
+
+        self.tree["columns"] = ("FileID", "FileName", "FileType")
+
+        self.tree.column("#0", width=0, stretch=NO)
+        self.tree.column("FileID", anchor=CENTER, width=40)
+        self.tree.column("FileName", anchor=CENTER, width=400)
+        self.tree.column("FileType", anchor=CENTER, width=60)
+
+        self.tree.heading("#0", text="", anchor=W)
+        self.tree.heading("FileID", text="File ID", anchor=CENTER)
+        self.tree.heading("FileName", text="File Name", anchor=CENTER)
+        self.tree.heading("FileType", text="File Type", anchor=CENTER)
+
+        self.tree.tag_configure('oddrow', background="white")
+        self.tree.tag_configure('evenrow', background="lightblue")
+
+    
+        #populate table with blank search
+        self.dynamicTreeSearch(None)
+
+        #bind right click to pop up menu
+        #self.tree.bind("<Button-3>", self.do_popup)
+        #self.tree.bind("<Button-1>", self.fill_view_edit)
+    
+
+    def dynamicTreeSearch(self,input):
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+        if input == "":
+            input = None
+        count = 0
+        files = self.controller.database.database_category_query(input)
+        if files != None:
+            for record in files:
+                print(record)
+                if count %2 ==0:
+                    self.tree.insert(parent="",index="end", iid= count, text="", values=(record[0],record[1],record[2]),tags=('evenrow',""))
+
+                else:
+                    self.tree.insert(parent="",index="end", iid= count, text="", values=(record[0],record[1],record[2]),tags=('oddrow',""))
+                count +=1 
+
+    def delete_treeItem(self):
+        curItem = self.tree.focus()
+        selectedCatID = self.tree.item(curItem)["values"][0]
+        selectedCatName = self.tree.item(curItem)["values"][1]
+        self.controller.database.database_category_delete(selectedCatID,selectedCatName)
+        page = self.controller.get_page("Files")
+        self.tree.delete(curItem)
+        page.load_categories()
+        self.dynamicTreeSearch(None)
+
+
+    def close_win(self,top):
+        top.destroy()
+    def create_category(self,e):
+        self.controller.database.database_category_insert(e)
+        page = self.controller.get_page("Files")
+        self.dynamicTreeSearch(None)
+        page.load_categories()
+        self.close_win(self.top)
+
+    #Define a function to open the Popup Dialogue
+    def popupwin(self):
+    #Create a Toplevel window
+        self.top= tk.Toplevel(self)
+        self.top.geometry("400x150")
+        #top.eval('tk::PlaceWindow . center')
+
+   #Create an Entry Widget in the Toplevel window
+        label = tk.Label(self.top,text="Enter A New Category Name:")
+        label.pack(pady=10)
+        entry= Entry(self.top, width= 25)
+        entry.pack()
+
+    #Create a Button to print something in the Entry widget
+        Button(self.top,text= "Create Category", command= lambda:self.create_category(entry.get())).pack(pady= 5,in_=self.top, side="top")
+        #Create a Button Widget in the Toplevel Window
+        button= Button(self.top, text="Cancel", command=lambda:self.close_win(self.top))
+        button.pack(pady=5, in_=self.top, side="top")
+  
+
+
+        
+
 
 
 class Playlists(tk.Frame):
@@ -145,7 +267,7 @@ class Files(tk.Frame):
         self.searchBar.bind("<KeyRelease>", lambda args: self.dynamicTreeSearch(self.searchBar.get()))
         button_addFiles = tk.Button(self, text="Add Files", command=lambda: controller.show_frame("StartPage")).grid(column=0,row=1,sticky='W')
         button_view_editFiles = tk.Button(self, text="View Or Edit File", command=lambda: controller.show_frame("StartPage")).grid(column=1,row=1,sticky='E')
-        button_deleteFiles = tk.Button(self, text="Delete File", command=lambda: self.treeSelectedItem()).grid(column=2,row=1,sticky='W')
+        button_deleteFiles = tk.Button(self, text="Delete File", command=lambda: self.delete_treeItem()).grid(column=2,row=1,sticky='W')
         button_deleteFiles12 = tk.Button(self, text="Delete File", command=lambda: self.treeSelectedItem()).grid(column=3,row=1,sticky='W')
         button_deleteFiles2 = tk.Button(self, text="Delete File", command=lambda: self.treeSelectedItem()).grid(column=4,row=1,sticky='W')
         button_deleteFiles4 = tk.Button(self, text="Delete File", command=lambda: self.treeSelectedItem()).grid(column=5,row=1,sticky='W')
@@ -236,7 +358,7 @@ class Files(tk.Frame):
         view_edit_frame_commentBox.columnconfigure(0, weight=100)  
         view_edit_frame_commentBox.rowconfigure(0, weight=100)  
         view_edit_frame_commentBox.grid_propagate(False)
-        self.view_edit_entry_commentBox = tk.Entry(view_edit_frame_commentBox)
+        self.view_edit_entry_commentBox = tk.Text(view_edit_frame_commentBox)
         self.view_edit_entry_commentBox.grid(sticky="NSEW")
 
         view_edit_frame_listbox = tk.Frame(view_editFrame, width=250, height=10)
@@ -244,11 +366,16 @@ class Files(tk.Frame):
         view_edit_frame_listbox.rowconfigure(0, weight=10) 
         view_edit_frame_listbox.columnconfigure(0, weight=10) 
         view_edit_frame_listbox.grid_propagate(False) 
-        yscrollbar = Scrollbar(view_edit_frame_listbox)
-        yscrollbar.pack(side = RIGHT, fill = Y)
-        self.listBox = tk.Listbox(view_edit_frame_listbox, selectmode = "multiple",yscrollcommand = yscrollbar.set)
+        self.yscrollbar = Scrollbar(view_edit_frame_listbox)
+        self.yscrollbar.pack(side = RIGHT, fill = Y)
+        self.listBox = tk.Listbox(view_edit_frame_listbox, selectmode = "multiple",yscrollcommand = self.yscrollbar.set)
         self.listBox.pack(pady = 5)
+
+        self.load_categories()
+
   
+    def load_categories(self):
+        self.listBox.delete('0','end')
         categories = self.controller.database.database_category_query()
         catlist=[]
         for record in categories:
@@ -256,7 +383,7 @@ class Files(tk.Frame):
                 catlist.append(record[1])
     
         self.listBox.insert(END, *catlist)
-        yscrollbar.config(command = self.listBox.yview)
+        self.yscrollbar.config(command = self.listBox.yview)
 
     def listBox_get_selected_items(self):
         for i in self.listBox.curselection():
@@ -272,9 +399,13 @@ class Files(tk.Frame):
         
         result = self.controller.database.database_search_files_by_ID(self.tree.item(item)["values"][0],self.controller.current_session_state)
 
+        self.view_edit_entry_fileName.delete(0, 'end')
+        self.view_edit_entry_filePath.delete(0, 'end')
+        self.view_edit_entry_fileType.delete(0, 'end')
         self.view_edit_entry_fileName.insert(0,result[0][1])
         self.view_edit_entry_filePath.insert(0,result[0][2])
         self.view_edit_entry_fileType.insert(0,result[0][3])
+        self.view_edit_entry_commentBox.delete(1.0, 'end')
         if result[0][4] != None:
             self.view_edit_entry_commentBox.insert(0,result[0][4])
         #call categories / files then loop through each
@@ -308,7 +439,7 @@ class Files(tk.Frame):
             self.playpopup.grab_release()
         pass
 
-    def treeSelectedItem(self):
+    def delete_treeItem(self):
         curItem = self.tree.focus()
         selectedFileID = self.tree.item(curItem)["values"][0]
         selectedFileName = self.tree.item(curItem)["values"][0]
