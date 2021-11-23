@@ -1,5 +1,8 @@
 import sys,os,json
 from tkinter.messagebox import showerror
+import tkinter.simpledialog
+import tkinter as tk
+#from tkinter import *
 
 class Utilities:
     if getattr(sys, 'frozen', False):
@@ -35,10 +38,6 @@ class Utilities:
             json.dump(dicto, outfile)
 
 
-
-import tkinter as tk
-from tkinter import *
-
 class MyDialog(tk.simpledialog.Dialog):
     def __init__(self, parent, title):
         self.dicto = {}
@@ -48,27 +47,27 @@ class MyDialog(tk.simpledialog.Dialog):
         # print(type(frame)) # tkinter.Frame
         self.label = tk.Label(frame, width=25, text="Select the file types to search for.")
         self.label.pack()
-        self.cv = IntVar()
-        self.cv1 = IntVar()
-        self.cv2 = IntVar()
-        self.cv3 = IntVar()
-        self.cv4 = IntVar()
-        self.cv5 = IntVar()
-        self.cv6 = IntVar()
+        self.cv = tk.IntVar()
+        self.cv1 = tk.IntVar()
+        self.cv2 = tk.IntVar()
+        self.cv3 = tk.IntVar()
+        self.cv4 = tk.IntVar()
+        self.cv5 = tk.IntVar()
+        self.cv6 = tk.IntVar()
 
-        self.c = Checkbutton(frame, text = "M4A",variable=self.cv)
+        self.c = tk.Checkbutton(frame, text = "M4A",variable=self.cv)
         self.c.pack()
-        self.c1 = Checkbutton(frame, text = "CFLAC",variable=self.cv1)
+        self.c1 = tk.Checkbutton(frame, text = "CFLAC",variable=self.cv1)
         self.c1.pack()
-        self.c2 = Checkbutton(frame, text = "MP3",variable=self.cv2)
+        self.c2 = tk.Checkbutton(frame, text = "MP3",variable=self.cv2)
         self.c2.pack()
-        self.c3 = Checkbutton(frame, text = "MP4",variable=self.cv3)
+        self.c3 = tk.Checkbutton(frame, text = "MP4",variable=self.cv3)
         self.c3.pack()
-        self.c4 = Checkbutton(frame, text = "WAV",variable=self.cv4)
+        self.c4 = tk.Checkbutton(frame, text = "WAV",variable=self.cv4)
         self.c4.pack()
-        self.c5 = Checkbutton(frame, text = "WMA",variable=self.cv5)
+        self.c5 = tk.Checkbutton(frame, text = "WMA",variable=self.cv5)
         self.c5.pack()
-        self.c6 = Checkbutton(frame, text = "AAC",variable=self.cv6)
+        self.c6 = tk.Checkbutton(frame, text = "AAC",variable=self.cv6)
         self.c6.pack()
   
 
@@ -115,6 +114,6 @@ class MyDialog(tk.simpledialog.Dialog):
 # with open('data.txt', 'w') as outfile:
 #     json.dump(data, outfile)
 
-Utilities.load_state_file("C:/Users/martyn.bell/OneDrive - Vianet Limited/Apprentice stuff/Final Project/BCS_synoptic_Project/Data/Cheese.txt")
+#Utilities.load_state_file("C:/Users/martyn.bell/OneDrive - Vianet Limited/Apprentice stuff/Final Project/BCS_synoptic_Project/Data/Cheese.txt")
 #Utilities.load_system_config("C:\\Users\\martyn.bell\\OneDrive - Vianet Limited\\Apprentice stuff\\Final Project\\BCS_synoptic_Project\\Data\\config.json")
 #Utilities.save_state(100,"Cheese")

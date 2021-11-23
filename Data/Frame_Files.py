@@ -29,8 +29,13 @@ class Files(tk.Frame):
         button_deleteFiles12 = tk.Button(self, text="Delete File", command=lambda: self.treeSelectedItem()).grid(column=3,row=1,sticky='W')
         button_deleteFiles2 = tk.Button(self, text="Delete File", command=lambda: self.treeSelectedItem()).grid(column=4,row=1,sticky='W')
         button_deleteFiles4 = tk.Button(self, text="Delete File", command=lambda: self.treeSelectedItem()).grid(column=5,row=1,sticky='W')
-        button_deleteFiles22 = tk.Button(self, text="Delete File", command=lambda: self.treeSelectedItem()).grid(column=6,row=1,sticky='W')
-        button_deleteFiles434 = tk.Button(self,text='Print Selected', command=lambda: self.selected_item()).grid(column=7,row=1,sticky='W')
+        tk.Button(self, text="Delete File", command=lambda: self.treeSelectedItem()).grid(column=6,row=1,sticky='W')
+        tk.Button(self, text="Delete File", command=lambda: self.treeSelectedItem()).grid(column=7,row=1,sticky='W')
+        tk.Button(self, text="Delete File", command=lambda: self.treeSelectedItem()).grid(column=8,row=1,sticky='W')
+        tk.Button(self, text="Delete File", command=lambda: self.treeSelectedItem()).grid(column=9,row=1,sticky='W')
+        tk.Button(self, text="Delete File", command=lambda: self.treeSelectedItem()).grid(column=10,row=1,sticky='W')
+
+        button_deleteFiles434 = tk.Button(self,text='Print Selected', command=lambda: self.selected_item()).grid(column=11,row=1,sticky='W')
 
 
 
@@ -95,21 +100,31 @@ class Files(tk.Frame):
         view_editFrame = tk.Frame(self)
         view_editFrame.place(x=550,y=115)
         view_edit_label = tk.Label(view_editFrame,text="View or edit file details below:").grid(column=0,row=0,sticky='N',columnspan=3,pady=10)
-        view_edit_label_fileName = tk.Label(view_editFrame,text="File Name:").grid(column=0,row=1,sticky='N',pady=5)
-        view_edit_label_fileType = tk.Label(view_editFrame,text="File Path:").grid(column=0,row=2,pady=5)
-        view_edit_label_filePath = tk.Label(view_editFrame,text="File Type:").grid(column=0,row=3,pady=5)
-        view_edit_label_commentBox = tk.Label(view_editFrame,text="Comment:").grid(column=0,row=4,pady=5)
-        view_edit_label_category = tk.Label(view_editFrame,text="Category").grid(column=0,row=6,pady=5) ## include space for comment box
+        tk.Label(view_editFrame,text="THISISJUSTALOADOADJADO").grid(column=3,row=9)
+        tk.Label(view_editFrame,text="THISISJUSTALOADOADJADO").grid(column=4,row=9)
+        tk.Label(view_editFrame,text="THISISJUSTALOADOADJADO").grid(column=5,row=9)
+
+        view_edit_label_fileName = tk.Label(view_editFrame,text="File Name:")
+        #view_edit_label_fileName.grid(column=0,row=1,sticky='NW',pady=5)
+        view_edit_label_fileName.place(x=0,y=45)
+        view_edit_label_fileType = tk.Label(view_editFrame,text="File Path:")
+        view_edit_label_fileType.place(x=0,y=75)
+        view_edit_label_filePath = tk.Label(view_editFrame,text="File Type:")
+        view_edit_label_filePath.place(x=0,y=105)
+        view_edit_label_commentBox = tk.Label(view_editFrame,text="Comment:")
+        view_edit_label_commentBox.grid(column=0,row=4,sticky='NW',pady=5)
+        view_edit_label_category = tk.Label(view_editFrame,text="Category:") ## include space for comment box
+        view_edit_label_category.grid(column=0,row=6,sticky='NW',pady=5)
         #need to include image stuffs
 
-        self.view_edit_entry_fileName = tk.Entry(view_editFrame,text="")
-        self.view_edit_entry_fileName.grid(column=1,row=1,sticky='N',columnspan=3,pady=5)
+        self.view_edit_entry_fileName = tk.Entry(view_editFrame,text="",width=200)
+        self.view_edit_entry_fileName.place(x=80,y=45)
 
         self.view_edit_entry_fileType = tk.Entry(view_editFrame,text="")
-        self.view_edit_entry_fileType.grid(column=1,row=2,columnspan=3,pady=5)
+        self.view_edit_entry_fileType.place(x=80,y=75)
 
         self.view_edit_entry_filePath = tk.Entry(view_editFrame,text="")
-        self.view_edit_entry_filePath.grid(column=1,row=3,columnspan=3,pady=5)
+        self.view_edit_entry_filePath.place(x=80,y=105)
 
         view_edit_frame_commentBox = tk.Frame(view_editFrame, width=200, height=100)
         view_edit_frame_commentBox.grid(column=0,row=5,columnspan=3,pady=5)
@@ -120,7 +135,7 @@ class Files(tk.Frame):
         self.view_edit_entry_commentBox.grid(sticky="NSEW")
 
         view_edit_frame_listbox = tk.Frame(view_editFrame, width=250, height=10)
-        view_edit_frame_listbox.grid(column=1,row=6,columnspan=3,pady=5)
+        view_edit_frame_listbox.grid(column=1,row=6,sticky='W',columnspan=3,pady=5)
         view_edit_frame_listbox.rowconfigure(0, weight=10) 
         view_edit_frame_listbox.columnconfigure(0, weight=10) 
         view_edit_frame_listbox.grid_propagate(False) 
@@ -135,12 +150,14 @@ class Files(tk.Frame):
         diag = MyDialog(self,"BOX")
         answer = askyesno("Add a file or a folder ", f"Click 'Yes' to add a file \n or \n click 'No' to add a folder ?")
         if answer:
-            print(diag.selectedTypes)
             filename = fd.askopenfilename(filetypes=diag.selectedTypes)
             self.mediaLibrary.add_file(filename)
         else:
             directory = fd.askdirectory(parent=self,initialdir="/",title='Please select a directory')
-            self.mediaLibrary.add_folder(directory)
+            fileTypes = []
+            for x in diag.selectedTypes:
+                fileTypes.append(x[1][2:].strip())
+            self.mediaLibrary.add_folder(directory,fileTypes)
         self.populateTable(self.mediaLibrary)
 
     def select_file(tupletypes= None):
@@ -182,19 +199,19 @@ class Files(tk.Frame):
     def fill_view_edit(self, event):
         item = self.tree.identify("item", event.x, event.y)
         print("you clicked on", self.tree.item(item)["values"])
-        print(self.tree.item(item)["values"][1])
+        selectedFile =self.tree.item(item)["values"][0]
+        file = self.mediaLibrary.get_file(selectedFile)
+        print(type(file))
         
-        result = self.controller.database.database_search_files_by_ID(self.tree.item(item)["values"][0],self.controller.current_session_state)
 
         self.view_edit_entry_fileName.delete(0, 'end')
         self.view_edit_entry_filePath.delete(0, 'end')
         self.view_edit_entry_fileType.delete(0, 'end')
-        self.view_edit_entry_fileName.insert(0,result[0][1])
-        self.view_edit_entry_filePath.insert(0,result[0][2])
-        self.view_edit_entry_fileType.insert(0,result[0][3])
+        self.view_edit_entry_fileName.insert(0,file.file_name)
+        self.view_edit_entry_filePath.insert(0,file.file_path)
+        self.view_edit_entry_fileType.insert(0,file.file_type)
         self.view_edit_entry_commentBox.delete(1.0, 'end')
-        if result[0][4] != None:
-            self.view_edit_entry_commentBox.insert(0,result[0][4])
+        self.view_edit_entry_commentBox.insert(0,file.file_comment)
         #call categories / files then loop through each
         #listBox_set_selected_items(n)
 
@@ -228,9 +245,11 @@ class Files(tk.Frame):
         DEBUG(f"Current ITEM: {curItem}")
         selectedFileID = self.tree.item(curItem)["values"][0]
         selectedFileName = self.tree.item(curItem)["values"][1]
+        selectedFileType = self.tree.item(curItem)["values"][2]
         DEBUG(f"selectedFileID: {selectedFileID}")
         DEBUG(f"selectedFileName: {selectedFileName}")
-        # TODO
+        DEBUG(f"selectedFileName: {selectedFileType}")
+        self.mediaLibrary.removeFile(selectedFileID,selectedFileName,selectedFileType)
         self.tree.delete(curItem)
 
     def populateTable(self,mediaLibrary):
@@ -239,13 +258,12 @@ class Files(tk.Frame):
 
         count = 0
         if self.mediaLibrary.getSize() > 0:
-            for record in self.mediaLibrary.files:
-                print(record)
+            for key,record in self.mediaLibrary.files.items():
                 if count %2 ==0:
-                    self.tree.insert(parent="",index="end", iid= count, text="", values=(1,record.file_name,record.file_type),tags=('evenrow',""))
+                    self.tree.insert(parent="",index="end", iid= count, text="", values=(key,record.file_name,record.file_type),tags=('evenrow',""))
 
                 else:
-                    self.tree.insert(parent="",index="end", iid= count, text="", values=(1,record.file_name,record.file_type),tags=('oddrow',""))
+                    self.tree.insert(parent="",index="end", iid= count, text="", values=(key,record.file_name,record.file_type),tags=('oddrow',""))
                 count +=1 
 
 
@@ -287,19 +305,39 @@ class MediaFile(Image):
 
 class MediaLibrary:
     def __init__(self) -> None:
-        self.files = []
+        self.files = {}
+        if self.getSize() == 0:
+            self.keyCount = 1
+        else:
+            self.keyCount =  max(self.files.keys()) + 1
     def getSize(self):
+        DEBUG(f"GETSIZE: {len(self.files)}")
         return len(self.files)
     def add_file(self,filePath):
-        self.files.append(MediaFile(filePath))
-        pass
+        self.files[self.keyCount] = (MediaFile(filePath))
+        self.keyCount +=1
+
     def add_folder(self,folderDir,fileTypes) -> list:
         for subdir, dir, files in os.walk(folderDir):
             for file in files:
                 file_path = subdir + os.sep + file
                 file_type = os.path.splitext(file)[1][1:]
                 if file_type in fileTypes:
-                    self.files.append(MediaFile(file_path))
+                    self.files[self.keyCount] = (MediaFile(file_path))
+                    self.keyCount +=1
+
+    def removeFile(self,fileid,filename,filetype):
+        DEBUG(f"GETSIZE BEFORE REMOVE: {len(self.files)}")
+        for key, value in self.files.items():
+            if value.file_name == filename and value.file_type == filetype and key == fileid:
+                del self.files[key]
+                DEBUG(f"GETSIZE AFTER REMOVE: {len(self.files)}")
+                break
+    
+    def get_file(self,dictKey):
+        print(dictKey)
+        print(self.files.get(dictKey))
+        return self.files.get(dictKey)
     def exportLibrary():
         pass
     def importLibrary(json):
