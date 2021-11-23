@@ -9,30 +9,32 @@ DEBUGON = True
 
 class MediaDataBase:
     next_state = 1
-    def __init__(self,name) -> None:
+    def __init__(self,name, current_session_state = None) -> None:
         self.DBname = name
         self.connection = sqlite3.connect(self.DBname)
         self.crsr = self.connection.cursor()
         self.database_connect()
-        self.session_state = None
+        self.session_state = current_session_state
+        if self.session_state == None:
+            self.create_state()
 
 
     
     def set_session_state(self,state_id)-> None:
-        print("STATE ID INPUT: ", state_id)
+        DEBUG(f"STATE ID INPUT: , {state_id}")
         records = []
         try:
             with self.connection as con:
                 records += con.execute('SELECT * FROM states WHERE state_id = ? ;',(state_id,))
         except sqlite3.Error as e:
             print("An error occurred:", e.args[0])
-        print("RECORDS GOT: ",records)
+        DEBUG(f"RECORDS GOT: , {records}")
         if len(list(records)) > 0 :
             for record in records:
-                print("FOR RECORD: ", record)
+                DEBUG(f"FOR RECORD: , {record}")
                 if record[0] == state_id:
                     self.session_state = record[0]
-                    print("SESSION STATE IS: ", self.session_state)
+                    DEBUG(f"SESSION STATE IS: , {self.session_state}")
                     break
         else:
             self.create_state()
@@ -52,7 +54,7 @@ class MediaDataBase:
             print("An error occurred:", e.args[0])
         
         self.session_state = len(list(records)) + 1
-        print("SESSION STATE IS: ", self.session_state)
+        DEBUG(f"SESSION STATE IS: , {self.session_state}")
 
 ### SET UP INITAL DATABASE START ########################################################################
     def database_connect(self) -> None:
@@ -127,13 +129,13 @@ class MediaDataBase:
             print("An error occurred:", e.args[0])
 
     def database_category_query(self,queryStr = None) -> List:
-        print("DB CATAGORY QUERY: ",queryStr)
+        DEBUG(f"DB CATAGORY QUERY: ,{queryStr}")
         records = []
         if queryStr == None:
             try:
                 with self.connection as con:
                     records += con.execute('SELECT * FROM categories WHERE fok_state_id =?;',(self.session_state,))
-                    print("RESULTS: ",records)
+                    DEBUG(f"RESULTS: ,{records}")
                     return list(records)
             except sqlite3.Error as e:
                 print("An error occurred:", e.args[0])
@@ -141,14 +143,14 @@ class MediaDataBase:
             try:
                 with self.connection as con:
                     records += con.execute('SELECT * FROM categories WHERE category_name = ? AND fok_state_id =?;',(queryStr,self.session_state))
-                    print("RESULTS: ",records)
+                    DEBUG(f"RESULTS: ,{records}")
                     return list(records)
             except sqlite3.Error as e:
                 print("An error occurred:", e.args[0])
 
     def database_category_update(self,catagory_id, catagory_name) -> None:
         records = (catagory_name,catagory_id,self.session_state)
-        print("DB CATAGORY UPDATE", records)
+        DEBUG(f"DB CATAGORY UPDATE, {records}")
         try:
             with self.connection as con:
                 con.execute("""UPDATE categories
@@ -159,7 +161,7 @@ class MediaDataBase:
     
     def database_category_delete(self,catagory_id,catagory_name) -> None:
         records = (catagory_id,catagory_name,self.session_state)
-        print("DB CATAGORY DELETE", records)
+        DEBUG(f"DB CATAGORY DELETE, {records}")
         try:
             with self.connection as con:
                 con.execute("""DELETE FROM categories
@@ -198,23 +200,23 @@ class MediaDataBase:
             print("An error occurred:", e.args[0])
     
     def database_search_files(self,input,state_id) -> List:
-        print("DB FILES QUERY: ", input, ",", state_id)
+        DEBUG(f"DB FILES QUERY: , {input},  {state_id}")
         records = []
         try:
             with self.connection as con:
                 records += con.execute('SELECT * FROM files WHERE (file_name LIKE ? OR file_type LIKE ?) AND fok_state_id = ?;',('%'+input+'%','%'+input+'%',state_id))
-                print(records)
+                DEBUG(f"{records}")
                 return records
         except sqlite3.Error as e:
             print("An error occurred:", e.args[0])
     
     def database_search_files_by_ID(self,input,state_id) -> List:
-        print("DB FILES QUERY BY ID: ", input, ",", state_id)
+        DEBUG(f"DB FILES QUERY BY ID:  {input},{state_id}")
         records = []
         try:
             with self.connection as con:
                 records += con.execute('SELECT * FROM files WHERE (file_id = ?) AND fok_state_id = ?;',(input,state_id))
-                print(records)
+                DEBUG(f"{records}")
                 return records
         except sqlite3.Error as e:
             print("An error occurred:", e.args[0])
@@ -266,4 +268,6 @@ if __name__ == '__main__':
                     record = (file_name,fr"{file_path}",file_type)
                     files_to_add.append(record)
         return files_to_add
+
+        
 

@@ -1,3 +1,8 @@
 import json
 
-files = [(1,2,3,4,5,6),(1,2,3,4,5,6),,(1,2,3,4,5,6),(1,2,3,4,5,6)]
+dicto = {"LAST_LOAD_FILE" : None}
+
+data = json.dumps(dicto)
+
+with open("config.json", 'w') as f:
+    f.write(data)

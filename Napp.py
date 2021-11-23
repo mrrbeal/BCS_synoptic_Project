@@ -11,15 +11,12 @@ from PIL import Image, ImageTk
 from Data.Frame_Categories import Categories as Categories
 from Data.Frame_Playlists import Playlists as Playlists
 from Data.Frame_Files import Files as Files
+from Data.Frame_Files import MediaFile as MediaFile
 import Data.Database as Database
 from Data.Utils import Utilities as Utilities
-
-
-
-
+from Data.Utils import MyDialog as MyDialog
 #import Data.MediaDataBase as Database, Data.Frame_Playlists as Playlists, Data.Frame_Categories as Categories, Data.Frame_Files as Files
 import win32api
-
 
 class MediaOrganiser(tk.Tk):
 
@@ -42,18 +39,19 @@ class MediaOrganiser(tk.Tk):
         elif __file__:
             self.dname = os.path.dirname(__file__)
 
-        self.last_file = Utilities.load_system_config()
-        if self.last_file != "None":
-            self.current_session_state = Utilities.load_save_file(self.last_file)
-        else: 
-            self.current_session_state = None
-            answer = askyesno("Load a State", "There isnt a State loaded \n Do you want to load one ?")
-            if answer != "" or answer != None:
-                self.last_file = select_file()
-                print(self.last_file)
-                self.current_session_state = Utilities.load_state_file(self.last_file)
+        # self.last_file = Utilities.load_system_config()
+        # if self.last_file != "None":
+        #     self.current_session_state = Utilities.load_save_file(self.last_file)
+        # else: 
+        #     self.current_session_state = None
+        #     answer = askyesno("Load a State", "There isnt a State loaded \n Do you want to load one ?")
+        #     if answer != "" or answer != None:
+        #         self.last_file = select_file()
+        #         print(self.last_file)
+        #         self.current_session_state = Utilities.load_state_file(self.last_file)
 
-
+        
+        self.current_session_state = None
         self.database = Database.MediaDataBase("cheese1.db",self.current_session_state)
         #self.database = Database.MediaDataBase(self.dname + r"\Data\system_database.db")
             
