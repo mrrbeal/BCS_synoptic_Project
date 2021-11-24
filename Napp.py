@@ -11,8 +11,8 @@ from PIL import Image, ImageTk
 from Data.Frame_Categories import Categories as Categories
 from Data.Frame_Playlists import Playlists as Playlists
 from Data.Frame_Files import Files as Files
-from Data.Frame_Files import MediaFile as MediaFile
 import Data.Database as Database
+from Data.DataConnector import MediaFile as MediaFile,MediaLibrary as MediaLibrary,CategoryList as CategoryList,ImageFile
 from Data.Utils import Utilities as Utilities
 from Data.Utils import MyDialog as MyDialog
 #import Data.MediaDataBase as Database, Data.Frame_Playlists as Playlists, Data.Frame_Categories as Categories, Data.Frame_Files as Files
@@ -32,6 +32,9 @@ class MediaOrganiser(tk.Tk):
                             "lightblue" : '#36c3d9',
                             "darkblue" : "#42618a"}
         self.title_font = tkfont.Font(family='Helvetica', size=18, weight="bold", slant="italic")
+
+        self.mediaLibrary = MediaLibrary()
+        self.categoryList = CategoryList()
 
         # determine if application is a script file or frozen exe
         if getattr(sys, 'frozen', False):

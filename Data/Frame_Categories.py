@@ -1,6 +1,16 @@
 import tkinter as tk
 from tkinter import Tk, ttk
 
+from Data.Frame_Files import Files
+
+def DEBUG(text):
+    if DEBUGON == True:
+        print(text)
+
+
+
+DEBUGON = True
+
 class Categories(tk.Frame):
 
     def __init__(self, parent, controller):
@@ -33,7 +43,7 @@ class Categories(tk.Frame):
         style.map("Treeview", background=[("selected","#347083")])
 
         tree_frame= tk.Frame(self)
-        tree_frame.grid(column=0, row=3, columnspan=3, pady=10)
+        tree_frame.grid(column=0, row=3, columnspan=1, pady=10)
 
         tree_scroll = tk.Scrollbar(tree_frame)
         tree_scroll.pack(side="right", fill="y")
@@ -43,90 +53,77 @@ class Categories(tk.Frame):
 
         tree_scroll.config(command=self.tree.yview)
 
-        self.tree["columns"] = ("FileID", "FileName", "FileType")
+        self.tree["columns"] = ("CategoryName")
 
         self.tree.column("#0", width=0, stretch="no")
-        self.tree.column("FileID", anchor="center", width=40)
-        self.tree.column("FileName", anchor="center", width=400)
-        self.tree.column("FileType", anchor="center", width=60)
+        self.tree.column("CategoryName", anchor="center", width=400)
 
         self.tree.heading("#0", text="", anchor="w")
-        self.tree.heading("FileID", text="File ID", anchor="center")
-        self.tree.heading("FileName", text="File Name", anchor="center")
-        self.tree.heading("FileType", text="File Type", anchor="center")
+        self.tree.heading("CategoryName", text="Category Name", anchor="center")
 
         self.tree.tag_configure('oddrow', background="white")
         self.tree.tag_configure('evenrow', background="lightblue")
 
     
         #populate table with blank search
-        self.dynamicTreeSearch(None)
+        self.populateTable()
 
         #bind right click to pop up menu
         #self.tree.bind("<Button-3>", self.do_popup)
         #self.tree.bind("<Button-1>", self.fill_view_edit)
     
 
-    def dynamicTreeSearch(self,input):
+    def populateTable(self):
         for item in self.tree.get_children():
             self.tree.delete(item)
-        if input == "":
-            input = None
+
         count = 0
-        files = self.controller.database.database_category_query(input)
-        if files != None:
-            for record in files:
-                print(record)
+        if self.controller.categoryList.getSize() > 0:
+            for record in self.controller.categoryList.categories:
                 if count %2 ==0:
-                    self.tree.insert(parent="",index="end", iid= count, text="", values=(record[0],record[1],record[2]),tags=('evenrow',""))
+                    self.tree.insert(parent="",index="end", iid= count, text="", values=(record),tags=('evenrow',""))
 
                 else:
-                    self.tree.insert(parent="",index="end", iid= count, text="", values=(record[0],record[1],record[2]),tags=('oddrow',""))
+                    self.tree.insert(parent="",index="end", iid= count, text="", values=(record),tags=('oddrow',""))
                 count +=1 
 
     def delete_treeItem(self):
         curItem = self.tree.focus()
-        selectedCatID = self.tree.item(curItem)["values"][0]
-        selectedCatName = self.tree.item(curItem)["values"][1]
-        self.controller.database.database_category_delete(selectedCatID,selectedCatName)
-        page = self.controller.get_page("Files")
+        DEBUG(f"Current ITEM: {curItem}")
+        categoryName = self.tree.item(curItem)["values"][0]
+        DEBUG(f"selectedFileID: {categoryName}")
+        self.controller.categoryList.removeCategory(categoryName)
         self.tree.delete(curItem)
-        page.load_categories()
-        self.dynamicTreeSearch(None)
 
-
-    
     def close_win(self,top):
         top.destroy()
         self.top_exists = False
 
     def create_category(self,e):
+        print("ENTRY IS ", e)
         if e.isdigit() or e.isalpha():
-            self.controller.database.database_category_insert(e)
-            page = self.controller.get_page("Files")
-            self.dynamicTreeSearch(None)
-            page.load_categories()
-            self.close_win(self.top)
-        else:
-            #TODO label for error text "name must not be blank"
-            pass
+            if e not in self.controller.categoryList.categories:
+                self.controller.categoryList.createCategory(e.strip())
+                self.populateTable()
+                self.close_win(self.top)
+        page = self.controller.get_page("Files")
+        page.unselectTable()
 
-    #Define a function to open the Popup Dialogue
     def popupwin(self):
         if self.top_exists == False:
         #Create a Toplevel window
             self.top= tk.Toplevel(self)
             self.top.geometry("400x150")
-            #top.eval('tk::PlaceWindow . center')
-
-    #Create an Entry Widget in the Toplevel window
             label = tk.Label(self.top,text="Enter A New Category Name:")
             label.pack(pady=10)
             entry= tk.Entry(self.top, width= 25)
             entry.pack()
-
-        #Create a Button to print something in the Entry widget
             tk.Button(self.top,text= "Create Category", command= lambda:self.create_category(entry.get())).pack(pady= 5,in_=self.top, side="top")
             #Create a Button Widget in the Toplevel Window
             tk.Button(self.top, text="Cancel", command=lambda:self.close_win(self.top)).pack(pady=5, in_=self.top, side="top")
             self.top_exists = True
+
+    def update_Category(self):#TODO
+        pass
+    def delete_Category(self):#TODO
+        pass

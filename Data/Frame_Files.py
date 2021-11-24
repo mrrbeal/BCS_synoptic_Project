@@ -1,12 +1,16 @@
 import tkinter as tk
+import PIL
 from tkinter import Label, Tk, Toplevel, ttk
 from tkinter.messagebox import askyesno, askquestion
 from tkinter import filedialog as fd
 from Data.Utils import MyDialog as MyDialog
+import sys, fnmatch
 
 def DEBUG(text):
     if DEBUGON == True:
         print(text)
+
+
 
 DEBUGON = True
 
@@ -14,15 +18,12 @@ class Files(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        self.mediaLibrary = MediaLibrary()
-
-
         self.controller = controller
         self.searchBar = tk.Entry(self,font=("helvetica",16))
         self.searchBar.grid(column=0,row=0,columnspan=3, pady=25,padx= 50)
         self.searchBar.insert(0, 'Search Files')
         self.searchBar.bind("<FocusIn>", lambda args: self.searchBar.delete('0', 'end'))
-        self.searchBar.bind("<KeyRelease>", lambda args: self.dynamicTreeSearch(self.searchBar.get()))
+        self.searchBar.bind("<KeyRelease>", lambda args: self.filter_table(self.searchBar.get()))
         button_addFiles = tk.Button(self, text="Add Files", command=self.add_files).grid(column=0,row=1,sticky='W')
         button_view_editFiles = tk.Button(self, text="View Or Edit File", command=lambda: controller.show_frame("StartPage")).grid(column=1,row=1,sticky='E')
         button_deleteFiles = tk.Button(self, text="Delete File", command=lambda: self.delete_treeItem()).grid(column=2,row=1,sticky='W')
@@ -43,6 +44,7 @@ class Files(tk.Frame):
         self.playlistsList=[1,2,3,4,5]
         self.selectedFileID=None
         selectedPlaylistID=None
+        self.selectedFile=None
 
         self.popup = tk.Menu(self, tearoff=0)
         self.popup.add_command(label="Add to Playlist",command=self.playlistPopup)
@@ -90,77 +92,93 @@ class Files(tk.Frame):
         self.tree.tag_configure('evenrow', background="lightblue")
 
         
-        #populate table with blank search
-        self.populateTable(self.mediaLibrary)
+
 
         #bind right click to pop up menu
         self.tree.bind("<Button-3>", self.do_popup)
         self.tree.bind("<Button-1>", self.fill_view_edit)
 
-        view_editFrame = tk.Frame(self)
+        view_editFrame = tk.Frame(self,width=550,height=1000)
         view_editFrame.place(x=550,y=115)
-        view_edit_label = tk.Label(view_editFrame,text="View or edit file details below:").grid(column=0,row=0,sticky='N',columnspan=3,pady=10)
-        tk.Label(view_editFrame,text="THISISJUSTALOADOADJADO").grid(column=3,row=9)
-        tk.Label(view_editFrame,text="THISISJUSTALOADOADJADO").grid(column=4,row=9)
-        tk.Label(view_editFrame,text="THISISJUSTALOADOADJADO").grid(column=5,row=9)
-
+        view_editFrame.grid_propagate(0)
+        view_edit_label = tk.Label(view_editFrame,text="View or edit file details below:").place(x=0,y=0)
+  
         view_edit_label_fileName = tk.Label(view_editFrame,text="File Name:")
-        #view_edit_label_fileName.grid(column=0,row=1,sticky='NW',pady=5)
         view_edit_label_fileName.place(x=0,y=45)
-        view_edit_label_fileType = tk.Label(view_editFrame,text="File Path:")
+        view_edit_label_fileType = tk.Label(view_editFrame,text="File Type:")
         view_edit_label_fileType.place(x=0,y=75)
-        view_edit_label_filePath = tk.Label(view_editFrame,text="File Type:")
+        view_edit_label_filePath = tk.Label(view_editFrame,text="File Path:")
         view_edit_label_filePath.place(x=0,y=105)
         view_edit_label_commentBox = tk.Label(view_editFrame,text="Comment:")
-        view_edit_label_commentBox.grid(column=0,row=4,sticky='NW',pady=5)
-        view_edit_label_category = tk.Label(view_editFrame,text="Category:") ## include space for comment box
-        view_edit_label_category.grid(column=0,row=6,sticky='NW',pady=5)
-        #need to include image stuffs
+        view_edit_label_commentBox.place(x=0,y=135)
+        view_edit_label_category = tk.Label(view_editFrame,text="Category:")
+        view_edit_label_category.place(x=0,y=260)
+    
 
-        self.view_edit_entry_fileName = tk.Entry(view_editFrame,text="",width=200)
-        self.view_edit_entry_fileName.place(x=80,y=45)
-
+        self.view_edit_entry_fileName = tk.Entry(view_editFrame,text="")
+        self.view_edit_entry_fileName.place(x=80,y=45,width=200)
         self.view_edit_entry_fileType = tk.Entry(view_editFrame,text="")
-        self.view_edit_entry_fileType.place(x=80,y=75)
-
+        self.view_edit_entry_fileType.place(x=80,y=75,width=200)
         self.view_edit_entry_filePath = tk.Entry(view_editFrame,text="")
-        self.view_edit_entry_filePath.place(x=80,y=105)
-
+        self.view_edit_entry_filePath.place(x=80,y=105,width=200)
         view_edit_frame_commentBox = tk.Frame(view_editFrame, width=200, height=100)
-        view_edit_frame_commentBox.grid(column=0,row=5,columnspan=3,pady=5)
+        view_edit_frame_commentBox.place(x=80,y=135)
         view_edit_frame_commentBox.columnconfigure(0, weight=100)  
         view_edit_frame_commentBox.rowconfigure(0, weight=100)  
-        view_edit_frame_commentBox.grid_propagate(False)
+        view_edit_frame_commentBox.grid_propagate(0)
         self.view_edit_entry_commentBox = tk.Text(view_edit_frame_commentBox)
         self.view_edit_entry_commentBox.grid(sticky="NSEW")
 
-        view_edit_frame_listbox = tk.Frame(view_editFrame, width=250, height=10)
-        view_edit_frame_listbox.grid(column=1,row=6,sticky='W',columnspan=3,pady=5)
+        view_edit_frame_listbox = tk.Frame(view_editFrame)
+        view_edit_frame_listbox.place(x=80,y=260)
         view_edit_frame_listbox.rowconfigure(0, weight=10) 
         view_edit_frame_listbox.columnconfigure(0, weight=10) 
-        view_edit_frame_listbox.grid_propagate(False) 
+        view_edit_frame_listbox.grid_propagate(0) 
         self.yscrollbar = tk.Scrollbar(view_edit_frame_listbox)
         self.yscrollbar.pack(side = "right", fill = "y")
         self.listBox = tk.Listbox(view_edit_frame_listbox, selectmode = "multiple",yscrollcommand = self.yscrollbar.set)
-        self.listBox.pack(pady = 5)
+        self.listBox.pack(pady = 5,fill = "y",expand=1)
+        view_edit_label_fileImage = tk.Label(view_editFrame,text="File image:")
+        view_edit_label_fileImage.place(x=300,y=0)
+        self.view_edit_label_image = tk.Label(view_editFrame,text="",borderwidth=2, relief="ridge")
+        self.view_edit_label_image.place(x=300,y=90,height=195, width=195)
+        view_edit_button_selectImage = tk.Button(view_editFrame,text="Change image", command=self.update_image_file)
+        view_edit_button_selectImage.place(x=350,y=45)
+        self.photoImg = None
+        self.img = None
+        self.tempImagePath = None
+        self.view_edit_button_saveChanges = tk.Button(view_editFrame,text="Save changes", command= self.update_file)
+        self.view_edit_button_saveChanges.place(x=100,y=450)
 
-        self.load_categories()
 
+
+    def unselectTable(self):
+        self.tree.selection_clear()
+        self.view_edit_entry_fileName.delete(0, 'end')
+        self.view_edit_entry_filePath.delete(0, 'end')
+        self.view_edit_entry_fileType.delete(0, 'end')
+        self.view_edit_entry_commentBox.delete(1.0, 'end')
+        self.listBox.delete(0,'end')
+        self.view_edit_label_image.configure(image=None)
+
+        #populate files table
+        self.populateTable()
+  
     def add_files(self):
         diag = MyDialog(self,"BOX")
         answer = askyesno("Add a file or a folder ", f"Click 'Yes' to add a file \n or \n click 'No' to add a folder ?")
         if answer:
             filename = fd.askopenfilename(filetypes=diag.selectedTypes)
-            self.mediaLibrary.add_file(filename)
+            self.controller.mediaLibrary.add_file(filename)
         else:
             directory = fd.askdirectory(parent=self,initialdir="/",title='Please select a directory')
             fileTypes = []
             for x in diag.selectedTypes:
                 fileTypes.append(x[1][2:].strip())
-            self.mediaLibrary.add_folder(directory,fileTypes)
-        self.populateTable(self.mediaLibrary)
+            self.controller.mediaLibrary.add_folder(directory,fileTypes)
+        self.populateTable()
 
-    def select_file(tupletypes= None):
+    def select_file(tupletypes= None):#TODO AM I USED
     
         if tupletypes == None:
             filetypes = (
@@ -177,17 +195,21 @@ class Files(tk.Frame):
 
         return filename
 
+    def update_image_file(self):
 
-    def load_categories(self):
-        self.listBox.delete('0','end')
-        categories = self.controller.database.database_category_query()
-        catlist=[]
-        for record in categories:
-            if record[2] == self.controller.current_session_state:
-                catlist.append(record[1])
-    
-        self.listBox.insert("end", *catlist)
-        self.yscrollbar.config(command = self.listBox.yview)
+        filetypes = [('Select Image', '*.png '), ('Select Image', '*.bmp '), ('Select Image', '*.gif '), ('Select Image', '*.jpg ')]
+
+        filename = fd.askopenfilename(
+            title='Select an Image',
+            initialdir='/',
+            filetypes=filetypes)
+        width = 195
+        height = 195
+        self.tempImagePath = filename
+        self.img = PIL.Image.open(filename)
+        self.img = self.img.resize((width,height), PIL.Image.ANTIALIAS)
+        self.photoImg =  PIL.ImageTk.PhotoImage(self.img)
+        self.view_edit_label_image.configure(image=self.photoImg)
 
     def listBox_get_selected_items(self):
         for i in self.listBox.curselection():
@@ -196,29 +218,54 @@ class Files(tk.Frame):
     def listBox_set_selected_items(self,n):
         self.listBox.select_set(n)
 
+    def update_file(self):
+        print("CALLED")
+        if self.selectedFile != None:
+            self.selectedFile.file_path = self.view_edit_entry_filePath.get()
+            self.selectedFile.file_name = self.view_edit_entry_fileName.get()
+            self.selectedFile.file_type = self.view_edit_entry_fileType.get()
+            self.selectedFile.file_comment = self.view_edit_entry_commentBox.get("1.0","end")
+            self.selectedFile.categories = []
+            for i in self.listBox.curselection():
+                self.selectedFile.categories.append(self.listBox.get(i))
+            if self.tempImagePath != None:
+                self.selectedFile.image_path = self.tempImagePath
+        self.tempImagePath = None
+        self.populateTable()
+        
     def fill_view_edit(self, event):
         item = self.tree.identify("item", event.x, event.y)
         print("you clicked on", self.tree.item(item)["values"])
         selectedFile =self.tree.item(item)["values"][0]
-        file = self.mediaLibrary.get_file(selectedFile)
-        print(type(file))
-        
-
+        gotfile = self.controller.mediaLibrary.get_file(selectedFile)      
+        self.selectedFile = gotfile  
         self.view_edit_entry_fileName.delete(0, 'end')
         self.view_edit_entry_filePath.delete(0, 'end')
         self.view_edit_entry_fileType.delete(0, 'end')
-        self.view_edit_entry_fileName.insert(0,file.file_name)
-        self.view_edit_entry_filePath.insert(0,file.file_path)
-        self.view_edit_entry_fileType.insert(0,file.file_type)
+        self.view_edit_entry_fileName.insert(0,gotfile.file_name)
+        self.view_edit_entry_filePath.insert(0,gotfile.file_path)
+        self.view_edit_entry_fileType.insert(0,gotfile.file_type)
         self.view_edit_entry_commentBox.delete(1.0, 'end')
-        self.view_edit_entry_commentBox.insert(0,file.file_comment)
-        #call categories / files then loop through each
-        #listBox_set_selected_items(n)
+        self.view_edit_entry_commentBox.insert(1.0,gotfile.file_comment)
+        self.listBox.delete(0,'end')
+        if self.controller.categoryList.getSize() > 0:
+            sortedList = sorted(self.controller.categoryList.categories)
+            print(self.controller.categoryList.categories)
+            print(sortedList)
+            for i in sortedList:
+                self.listBox.insert('end',i)
+            for x in gotfile.categories:
+                if x in sortedList:
+                    self.listBox_set_selected_items(sortedList.index(x))
+        width = 195
+        height = 195
+        print("IMAGE PATH", gotfile.image_path)
+        self.img = PIL.Image.open(gotfile.image_path)
+        self.img = self.img.resize((width,height), PIL.Image.ANTIALIAS)
+        self.photoImg =  PIL.ImageTk.PhotoImage(self.img)
+        self.view_edit_label_image.configure(image=self.photoImg)
 
-        # add image default or pull file path from DB
-
-
-    def do_popup(self, event):
+    def do_popup(self, event): #TODO
         try:
             item = self.tree.identify("item", event.x, event.y)
             curItem = self.tree.focus()
@@ -230,7 +277,7 @@ class Files(tk.Frame):
         finally:
             self.popup.grab_release()
 
-    def playlistPopup(self):
+    def playlistPopup(self): #TODO
         for x in self.playlistsList:
             self.playpopup.add_command(label=x)
         x, y = win32api.GetCursorPos()
@@ -249,99 +296,38 @@ class Files(tk.Frame):
         DEBUG(f"selectedFileID: {selectedFileID}")
         DEBUG(f"selectedFileName: {selectedFileName}")
         DEBUG(f"selectedFileName: {selectedFileType}")
-        self.mediaLibrary.removeFile(selectedFileID,selectedFileName,selectedFileType)
+        self.controller.mediaLibrary.removeFile(selectedFileID,selectedFileName,selectedFileType)
         self.tree.delete(curItem)
 
-    def populateTable(self,mediaLibrary):
+    def populateTable(self,search=""):
         for item in self.tree.get_children():
             self.tree.delete(item)
-
         count = 0
-        if self.mediaLibrary.getSize() > 0:
-            for key,record in self.mediaLibrary.files.items():
-                if count %2 ==0:
-                    self.tree.insert(parent="",index="end", iid= count, text="", values=(key,record.file_name,record.file_type),tags=('evenrow',""))
+        if self.controller.mediaLibrary.getSize() > 0:
+            for key,record in self.controller.mediaLibrary.files.items():
+                if search in record.file_name:
+                    if count %2 ==0:
+                        self.tree.insert(parent="",index="end", iid= count, text="", values=(key,record.file_name,record.file_type),tags=('evenrow',""))
 
-                else:
-                    self.tree.insert(parent="",index="end", iid= count, text="", values=(key,record.file_name,record.file_type),tags=('oddrow',""))
-                count +=1 
+                    else:
+                        self.tree.insert(parent="",index="end", iid= count, text="", values=(key,record.file_name,record.file_type),tags=('oddrow',""))
+                    count +=1 
 
+    def filter_table(self,search):
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+        count = 0
+        if self.controller.mediaLibrary.getSize() > 0:
+            for key,record in self.controller.mediaLibrary.files.items():
+                if search in record.file_name:
+                    if count %2 ==0:
+                        self.tree.insert(parent="",index="end", iid= count, text="", values=(key,record.file_name,record.file_type),tags=('evenrow',""))
 
-
-
-
-import os
-class Image:
-    def __init__(self,filePath=None) -> None:
-        #print(os.path.join(subdir, file))
-        if filePath != None:
-            self.image_path = filePath
-            self.image_name = os.path.split(filePath)[1].split(".")[0]
-        else:
-            self.image_path = None
-            self.image_name = None
-    def setImage(self,filePath):
-            self.image_path = filePath
-            self.image_name = os.path.split(filePath)[1].split(".")[0]
-
-class CategoryList:
-    def __init__(self) -> None:
-        self.categories = []
-    def addCategory(self,name):
-        if name.isdigit() or name.isalpha():
-            if name not in self.categories:
-                self.categories += name
+                    else:
+                        self.tree.insert(parent="",index="end", iid= count, text="", values=(key,record.file_name,record.file_type),tags=('oddrow',""))
+                    count +=1 
 
 
-
-
-
-class MediaFile(Image):
-    def __init__(self,filePath) -> None:
-        self.file_path = filePath
-        self.file_name = os.path.split(filePath)[1].split(".")[0]
-        self.file_type = os.path.splitext(filePath)[1][1:]
-        self.comment = ""
-
-class MediaLibrary:
-    def __init__(self) -> None:
-        self.files = {}
-        if self.getSize() == 0:
-            self.keyCount = 1
-        else:
-            self.keyCount =  max(self.files.keys()) + 1
-    def getSize(self):
-        DEBUG(f"GETSIZE: {len(self.files)}")
-        return len(self.files)
-    def add_file(self,filePath):
-        self.files[self.keyCount] = (MediaFile(filePath))
-        self.keyCount +=1
-
-    def add_folder(self,folderDir,fileTypes) -> list:
-        for subdir, dir, files in os.walk(folderDir):
-            for file in files:
-                file_path = subdir + os.sep + file
-                file_type = os.path.splitext(file)[1][1:]
-                if file_type in fileTypes:
-                    self.files[self.keyCount] = (MediaFile(file_path))
-                    self.keyCount +=1
-
-    def removeFile(self,fileid,filename,filetype):
-        DEBUG(f"GETSIZE BEFORE REMOVE: {len(self.files)}")
-        for key, value in self.files.items():
-            if value.file_name == filename and value.file_type == filetype and key == fileid:
-                del self.files[key]
-                DEBUG(f"GETSIZE AFTER REMOVE: {len(self.files)}")
-                break
-    
-    def get_file(self,dictKey):
-        print(dictKey)
-        print(self.files.get(dictKey))
-        return self.files.get(dictKey)
-    def exportLibrary():
-        pass
-    def importLibrary(json):
-        pass
 
 
 
