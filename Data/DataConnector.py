@@ -87,12 +87,25 @@ class MediaLibrary:
 class PlaylistLibrary:
     def __init__(self) -> None:
         self.playlists = {}
+        self.playlists["test"] = [(1,"A"),(2,"e"),(3,"w"),(4,"d"),(5,"b")]
+
+    def getSize(self):
+        DEBUG(f"GETSIZE: {len(self.playlists)}")
+        return len(self.playlists)
     
-    def add_playlist(self):
-        pass
+    def add_playlist(self,name):
+        self.playlists[name] =[]
     def delete_playlist(self):
         pass
     def rename_playlist(self,newkey,oldkey):
         if newkey!=oldkey:  
             self.playlists[newkey] = self.playlists[oldkey]
             del self.playlists[oldkey]
+    
+    def delete_file_from_playist(self,name,index):
+        for i in self.playlists[name]:
+            print(self.playlists[name])
+            if i[0] == index:
+                print(i[0])
+                self.playlists[name].pop(self.playlists[name].index(i))
+        
