@@ -1,10 +1,10 @@
 import tkinter as tk
 import PIL
-from tkinter import Label, Tk, Toplevel, ttk
-from tkinter.messagebox import askyesno, askquestion
+from tkinter import ttk
+from tkinter.messagebox import askyesno
 from tkinter import filedialog as fd
 from Data.Utils import MyDialog as MyDialog
-import sys, fnmatch
+import win32api
 
 def DEBUG(text):
     if DEBUGON == True:
@@ -27,8 +27,8 @@ class Files(tk.Frame):
         button_addFiles = tk.Button(self, text="Add Files", command=self.add_files).grid(column=0,row=1,sticky='W')
         button_view_editFiles = tk.Button(self, text="View Or Edit File", command=lambda: controller.show_frame("StartPage")).grid(column=1,row=1,sticky='E')
         button_deleteFiles = tk.Button(self, text="Delete File", command=lambda: self.delete_treeItem()).grid(column=2,row=1,sticky='W')
-        button_deleteFiles12 = tk.Button(self, text="Delete File", command=lambda: self.treeSelectedItem()).grid(column=3,row=1,sticky='W')
-        button_deleteFiles2 = tk.Button(self, text="Delete File", command=lambda: self.treeSelectedItem()).grid(column=4,row=1,sticky='W')
+        button_deleteFiles12 = tk.Button(self, text="Deleteawdwadwd File", command=lambda: self.controller.mediaLibrary.exportLibrary()).grid(column=3,row=1,sticky='W')
+        button_deleteFiles2 = tk.Button(self, text="impdd File", command=lambda: self.controller.mediaLibrary.importLibrary()).grid(column=4,row=1,sticky='W')
         button_deleteFiles4 = tk.Button(self, text="Delete File", command=lambda: self.treeSelectedItem()).grid(column=5,row=1,sticky='W')
         tk.Button(self, text="Delete File", command=lambda: self.treeSelectedItem()).grid(column=6,row=1,sticky='W')
         tk.Button(self, text="Delete File", command=lambda: self.treeSelectedItem()).grid(column=7,row=1,sticky='W')
@@ -41,13 +41,13 @@ class Files(tk.Frame):
 
 
 
-        self.playlistsList=[1,2,3,4,5]
+        self.playlistsList=  self.controller.playlistLibrary.playlists
         self.selectedFileID=None
         selectedPlaylistID=None
         self.selectedFile=None
 
         self.popup = tk.Menu(self, tearoff=0)
-        self.popup.add_command(label="Add to Playlist",command=self.playlistPopup)
+        self.popup.add_command(label="Add to Playlist",command=lambda: self.playlistPopup(self.curitem))
         self.popup.add_command(label="Edit Name")
         self.popup.add_separator()
         self.popup.add_command(label="Exit", command=lambda: self.closeWindow())
@@ -269,23 +269,28 @@ class Files(tk.Frame):
         try:
             item = self.tree.identify("item", event.x, event.y)
             curItem = self.tree.focus()
+            self.tree.selection_set(item)
             print(self.tree.item(curItem))
+            self.curitem = self.tree.item(item)["values"]
             print(item)
             print("you clicked on", self.tree.item(item)["values"])
             self.selectedFileID = self.tree.item(item)["values"][0]
-            self.popup.tk_popup(event.x_root, event.y_root, 0)
+            self.popup.tk_popup(event.x_root, event.y_root, 0,)
         finally:
             self.popup.grab_release()
 
-    def playlistPopup(self): #TODO
-        for x in self.playlistsList:
-            self.playpopup.add_command(label=x)
+    def playlistPopup(self,item): #TODO
+        last = self.playpopup.index(tk.END)
+        if last != None:
+            for i in range(last+1):
+                self.playpopup.delete(0, "end")
+        for l in self.playlistsList:
+            self.playpopup.add_command(label=l,command=lambda: self.add_toPlaylist(l,self.curitem))
         x, y = win32api.GetCursorPos()
         try:
             self.playpopup.tk_popup(x+20, y, 0)
         finally:
             self.playpopup.grab_release()
-        pass
 
     def delete_treeItem(self):
         curItem = self.tree.focus()
@@ -327,7 +332,13 @@ class Files(tk.Frame):
                         self.tree.insert(parent="",index="end", iid= count, text="", values=(key,record.file_name,record.file_type),tags=('oddrow',""))
                     count +=1 
 
-
+    def add_toPlaylist(self,playlistName,tableItem):
+        print("PLAYLISTNAME ",playlistName)
+        fileid,filename,filetype = tableItem
+        for key, value in self.controller.mediaLibrary.files.items():
+            if value.file_name == filename and value.file_type == filetype and key == fileid:
+                self.controller.playlistLibrary.add_file_to_playlist(playlistName,value)
+     
 
 
 

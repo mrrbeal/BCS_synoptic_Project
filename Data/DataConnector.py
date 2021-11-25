@@ -1,4 +1,4 @@
-import os,sys
+import os,sys,json,pickle
 
 def DEBUG(text):
     if DEBUGON == True:
@@ -37,6 +37,11 @@ class CategoryList:
     def removeCategory(self,categoryName):
         self.categories.remove(categoryName)
 
+    def exportLibrary(self):
+        export = json.dumps(self.categories)
+        return export
+
+
 class MediaFile(ImageFile):
     def __init__(self,filePath) -> None:
         ImageFile.__init__(self)
@@ -45,6 +50,7 @@ class MediaFile(ImageFile):
         self.file_type = os.path.splitext(filePath)[1][1:]
         self.file_comment = ""
         self.categories = []
+
 
 class MediaLibrary:
     def __init__(self) -> None:
@@ -79,10 +85,26 @@ class MediaLibrary:
     
     def get_file(self,dictKey):
         return self.files.get(dictKey)
-    def exportLibrary():
-        pass
-    def importLibrary(json):
-        pass
+
+    def toJSON(self):
+        return json.dumps(self, default=lambda o: o.__dict__, 
+            sort_keys=True, indent=4)
+
+    def exportLibrary(self):
+        export = {}
+        export["MEDIALIBRARY"] = self.toJSON()
+        print(export)
+        with open("medialib.txt", "wb") as F:
+            pickle.dump(self.files,F)
+        return export
+
+    def importLibrary(self):
+        with open(r"C:\Users\martyn.bell\OneDrive - Vianet Limited\Apprentice stuff\Final Project\BCS_synoptic_Project\medialib.txt",'rb') as f:
+            raw_data = f.read()
+        deserialized = pickle.loads(raw_data)
+        self.files = deserialized
+        print(deserialized)
+        print(self.files)
 
 class PlaylistLibrary:
     def __init__(self) -> None:
@@ -95,17 +117,67 @@ class PlaylistLibrary:
     
     def add_playlist(self,name):
         self.playlists[name] =[]
-    def delete_playlist(self):
-        pass
-    def rename_playlist(self,newkey,oldkey):
+
+    def delete_playlist(self,key):
+        self.playlists.pop(key, None)
+
+    def rename_playlist(self,oldkey,newkey):
         if newkey!=oldkey:  
             self.playlists[newkey] = self.playlists[oldkey]
             del self.playlists[oldkey]
     
+    def move_playlistFile(self,name,index,direction):
+        reindex = index-1
+        if direction == "up":
+            if reindex != 0:
+                move_up_list = list(self.playlists[name][reindex])
+                move_down_list = list(self.playlists[name][reindex-1])
+                move_up_list[0] = index-1
+                move_down_list[0] = index
+                self.playlists[name][reindex] = tuple(move_up_list)
+                self.playlists[name][reindex-1] = tuple(move_down_list)
+                self.playlists[name][reindex], self.playlists[name][reindex-1] = self.playlists[name][reindex-1], self.playlists[name][reindex]
+        
+        else:
+            playlistlength = len(self.playlists[name])-1
+            reindex += 1
+            if reindex <= playlistlength:
+                move_up_list = list(self.playlists[name][reindex])
+                move_down_list = list(self.playlists[name][reindex-1])
+                move_up_list[0] = index
+                move_down_list[0] = index+1
+                self.playlists[name][reindex] = tuple(move_up_list)
+                self.playlists[name][reindex-1] = tuple(move_down_list)
+                self.playlists[name][reindex], self.playlists[name][reindex-1] = self.playlists[name][reindex-1], self.playlists[name][reindex]
+
     def delete_file_from_playist(self,name,index):
         for i in self.playlists[name]:
-            print(self.playlists[name])
             if i[0] == index:
                 print(i[0])
                 self.playlists[name].pop(self.playlists[name].index(i))
-        
+        reindex = 1
+        for i in range(len(self.playlists[name])):
+            print(self.playlists[name][i])
+            edit = list(self.playlists[name][i])
+            edit[0] = reindex
+            self.playlists[name][i] = tuple(edit)
+            print(self.playlists[name][i])
+            #i[0] = reindex
+            #print(i)
+            reindex += 1
+
+    def add_file_to_playlist(self,name,mediaFile):
+        print(self.playlists[name])
+        tupToAdd = tuple((len(self.playlists[name])+1,mediaFile))
+        print(tupToAdd)
+        self.playlists[name].append(tupToAdd)   
+
+    def exportLibrary(self):
+        export = {}
+        export["PLAYLISTS"] = json.dumps(self.playlists)
+        return export
+
+
+cheese = PlaylistLibrary()
+exp = cheese.exportLibrary()
+print(exp)

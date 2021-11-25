@@ -1,9 +1,9 @@
-import os,sys
+import os,sys,pickle
 import tkinter as tk
 from tkinter import ttk
 from tkinter import font as tkfont
 from tkinter import filedialog as fd
-from tkinter.messagebox import askyesno, askquestion
+from tkinter.filedialog import asksaveasfile
 #from tkinter.ttk import *
 from tkscrolledframe import ScrolledFrame
 #from typing import Container, Counter, Text
@@ -17,6 +17,7 @@ from Data.Utils import Utilities as Utilities
 from Data.Utils import MyDialog as MyDialog
 #import Data.MediaDataBase as Database, Data.Frame_Playlists as Playlists, Data.Frame_Categories as Categories, Data.Frame_Files as Files
 import win32api
+import PIL
 
 class MediaOrganiser(tk.Tk):
 
@@ -74,7 +75,7 @@ class MediaOrganiser(tk.Tk):
         headerLabel.place(x=700, y=75)
 
 
-        sideMenu = tk.Frame(self, bg=self.colourPalette["darkblue"], height=700, width=150, highlightbackground="black",highlightthickness=1)
+        sideMenu = tk.Frame(self, bg=self.colourPalette["darkblue"], height=700, width=170, highlightbackground="black",highlightthickness=1)
         sideMenu.place(x=0, y=50)
         #sideMenu.grid_propagate(0)
         #options = ["Files", "playlists", "settings", "Help", "About"]
@@ -88,18 +89,40 @@ class MediaOrganiser(tk.Tk):
         #action = lambda x = options[i]: self.show_frame(x)
 
 ### Set up side menu buttons start ################################
+
+        width = 20
+        height = 20
+        self.limg = PIL.Image.open(self.dname + "\Data\load.png")
+        self.limg = self.limg.resize((width,height), PIL.Image.ANTIALIAS)
+        self.load_icon =  PIL.ImageTk.PhotoImage(self.limg)
+        self.simg = PIL.Image.open(self.dname + "\Data\save.png")
+        self.simg = self.simg.resize((width,height), PIL.Image.ANTIALIAS)
+        self.save_icon =  PIL.ImageTk.PhotoImage(self.simg)
+
+
+        self.button_load_state = tk.Button(sideMenu,image=self.load_icon,command=self.load_state)
+        self.button_save_state = tk.Button(sideMenu,image=self.save_icon,command=self.save_state)
+        self.button_save_state.place(x=30,y=5)
+        self.button_load_state.grid(column=1,row=0,pady=5,padx=30, sticky='e')
+
+        #self.button_load_state.configure(image=self.photoImg)
+
+
         tk.Button(sideMenu, text="Files",command=lambda x = "Files": self.show_frame(x), font="BahnschriftLight 15", 
-                    bg=self.colourPalette["darkblue"], fg="white", activebackground=self.colourPalette["darkblue"], activeforeground="black", bd=0).grid(column=0,row=0, columnspan=2)
+                    bg=self.colourPalette["darkblue"], fg="white", activebackground=self.colourPalette["darkblue"], activeforeground="black", bd=0).grid(column=0,row=1, columnspan=2)
         self.playlist_frame = ToggledFrame(sideMenu, self, text='playlists')
         self.playlist_frame.mainLabel.config(font="BahnschriftLight 15", bg=self.colourPalette["darkblue"], fg="white", activebackground=self.colourPalette["darkblue"], activeforeground="black", bd=0)
-        self.playlist_frame.grid(column=0,row=1, columnspan=2)
+        self.playlist_frame.grid(column=0,row=2, columnspan=2)
         tk.Button(sideMenu, text="Categories",command=lambda x = "Categories": self.show_frame(x), font="BahnschriftLight 15",
-                     bg=self.colourPalette["darkblue"], fg="white", activebackground=self.colourPalette["darkblue"], activeforeground="black", bd=0).grid(column=0,row=2, columnspan=2)
+                     bg=self.colourPalette["darkblue"], fg="white", activebackground=self.colourPalette["darkblue"], activeforeground="black", bd=0).grid(column=0,row=3, columnspan=2)
         tk.Button(sideMenu, text="Help",command=lambda x = "Files": self.show_frame(x), font="BahnschriftLight 15", 
-                    bg=self.colourPalette["darkblue"], fg="white", activebackground=self.colourPalette["darkblue"], activeforeground="black", bd=0).grid(column=0,row=3, columnspan=2)
+                    bg=self.colourPalette["darkblue"], fg="white", activebackground=self.colourPalette["darkblue"], activeforeground="black", bd=0).grid(column=0,row=4, columnspan=2)
 ### Set up side menu buttons end ##################################
+     
 
-        row = 4
+
+
+        row = 8
         for i in range(27):
             tk.Label(sideMenu, text="this is nonsence text",bg=self.colourPalette["darkblue"],fg=self.colourPalette["darkblue"]).grid(column=1,row=row)
             row +=1
@@ -122,11 +145,6 @@ class MediaOrganiser(tk.Tk):
 
         self.show_frame("Files")
 
-    # def show_frame(self, page_name):
-    #     '''Show a frame for the given page name'''
-    #     frame = self.frames[page_name]
-    #     frame.tkraise()
-
     def show_frame(self, page_name):
         for frame in self.frames.values():
             frame.grid_remove()
@@ -136,24 +154,45 @@ class MediaOrganiser(tk.Tk):
     def get_page(self, page_class):
         return self.frames[page_class]
 
-def select_file(tupletypes= None):
-    
-    if tupletypes == None:
-        filetypes = (
-            ('text files', '*.txt'),
-            ('All files', '*.*')
-        )
-    else:
-        filetypes = tupletypes
+    def select_file(tupletypes= None):
+        
+        if tupletypes == None:
+            filetypes = (
+                ('text files', '*.txt'),
+                ('All files', '*.*')
+            )
+        else:
+            filetypes = tupletypes
 
-    filename = fd.askopenfilename(
-        title='Open a file',
-        initialdir='/',
-        filetypes=filetypes)
+        filename = fd.askopenfilename(
+            title='Open a file',
+            initialdir='/',
+            filetypes=filetypes)
 
-    return filename
+        return filename
 
+    def save_state(self):
+        export = []
+        export.append(self.mediaLibrary.files)
+        export.append(self.playlistLibrary.playlists)
+        export.append(self.categoryList.categories)
 
+        files = [('Save File', '*.txt')]
+        file = asksaveasfile(filetypes = files)
+
+        with open(file, "wb") as F:
+            pickle.dump(export,F)
+
+    def load_state(self):
+        files = [('Save File', '*.txt')]
+        export = []
+        filename = fd.askopenfilename(filetypes = files)
+        with open(filename,'rb') as f:
+            raw_data = f.read()
+        export = pickle.loads(raw_data)
+        self.mediaLibrary.files = export[0]
+        self.playlistLibrary.playlists = export[1]
+        self.categoryList.categories = export[2]
 
 class ToggledFrame(tk.Frame):
 

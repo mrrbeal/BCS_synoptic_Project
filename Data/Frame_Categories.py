@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import Tk, ttk
+import PIL
 
 from Data.Frame_Files import Files
 
@@ -63,7 +64,6 @@ class Categories(tk.Frame):
 
         self.tree.tag_configure('oddrow', background="white")
         self.tree.tag_configure('evenrow', background="lightblue")
-
     
         #populate table with blank search
         self.populateTable()
