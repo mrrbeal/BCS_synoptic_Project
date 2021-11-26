@@ -37,6 +37,12 @@ class CategoryList:
     def removeCategory(self,categoryName):
         self.categories.remove(categoryName)
 
+    def updateCategory(self,oldName,newName):
+        for x in range(len(self.categories)):
+            if self.categories[x] == oldName:
+                self.categories[x] = newName
+
+
     def exportLibrary(self):
         export = json.dumps(self.categories)
         return export
@@ -109,7 +115,7 @@ class MediaLibrary:
 class PlaylistLibrary:
     def __init__(self) -> None:
         self.playlists = {}
-        self.playlists["test"] = [(1,"A"),(2,"e"),(3,"w"),(4,"d"),(5,"b")]
+        #self.playlists["test"] = [(1,"A"),(2,"e"),(3,"w"),(4,"d"),(5,"b")]
 
     def getSize(self):
         DEBUG(f"GETSIZE: {len(self.playlists)}")

@@ -2,7 +2,6 @@ import sys,os,json
 from tkinter.messagebox import showerror
 import tkinter.simpledialog
 import tkinter as tk
-#from tkinter import *
 
 class Utilities:
     if getattr(sys, 'frozen', False):
@@ -92,7 +91,7 @@ class MyDialog(tk.simpledialog.Dialog):
         self.destroy()
 
     def cancel_pressed(self):
-        # print("cancel")
+        self.selectedTypes = False
         self.destroy()
 
     def buttonbox(self):
